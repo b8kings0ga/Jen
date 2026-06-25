@@ -685,17 +685,28 @@ class VoiceBot:
 
     def ensure_front_note(self) -> subprocess.Popen | None:
         if self._front_note_proc is not None and self._front_note_proc.poll() is None:
+            if self._front_note_proc.stdin:
+                try:
+                    self._front_note_proc.stdin.write("show\n")
+                    self._front_note_proc.stdin.flush()
+                except Exception:
+                    pass
             return self._front_note_proc
         api_url = f"http://{self.args.tool_dashboard_host}:{self.args.tool_dashboard_port}/api/front-note"
+        try:
+            self.store.update_front_note(action="show", visible=True, position="right")
+        except Exception:
+            pass
         try:
             self._front_note_proc = subprocess.Popen(
                 [sys.executable, str(VOICE_ENTRYPOINT), "--front-note-server", "--front-note-api-url", api_url],
                 stdin=subprocess.PIPE,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
                 text=True,
                 bufsize=1,
             )
+            if self._front_note_proc.stdin:
+                self._front_note_proc.stdin.write("show\n")
+                self._front_note_proc.stdin.flush()
             return self._front_note_proc
         except Exception as exc:
             print(f"Front note failed: {exc}", flush=True)

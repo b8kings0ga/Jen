@@ -734,13 +734,15 @@ def run_front_note_server(api_url: str) -> None:
             self.webview.loadHTMLString_baseURL_(render_front_note_editor_document(self.api_url), NSURL.URLWithString_(base_url))
             NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(0.45, self, "poll:", None, True)
             NSTimer.scheduledTimerWithTimeInterval_target_selector_userInfo_repeats_(1 / 60, self, "edgeTick:", None, True)
+            AppHelper.callAfter(self.poll_, None)
 
         def poll_(self, timer):
             try:
                 req = request.Request(self.api_url, headers={"Accept": "application/json"})
                 raw = urlopen_bytes(req, timeout=1.5, verify_tls=True, label="front note poll")
                 state = json.loads(raw.decode("utf-8"))
-            except Exception:
+            except Exception as exc:
+                print(f"front note poll failed: {exc}", flush=True)
                 return
             version = int(state.get("version") or 0)
             if version == self.version:
@@ -771,6 +773,7 @@ def run_front_note_server(api_url: str) -> None:
                 self.window.makeKeyAndOrderFront_(None)
                 self.window.orderFrontRegardless()
                 self.snapToEdge()
+                self.hide_after_at = time.time() + 30.0
             else:
                 self.target_origin = self.hidden_origin
                 self.window.orderOut_(None)
@@ -841,7 +844,24 @@ def run_front_note_server(api_url: str) -> None:
 
     def read_commands() -> None:
         for raw in sys.stdin:
-            if raw.strip().lower() == "quit":
+            command = raw.strip().lower()
+            if command == "show":
+                AppHelper.callAfter(controller.applyState_, {
+                    "visible": True,
+                    "position": "right",
+                    "width": controller.width,
+                    "height": controller.height,
+                    "version": controller.version + 1,
+                })
+            elif command == "hide":
+                AppHelper.callAfter(controller.applyState_, {
+                    "visible": False,
+                    "position": controller.pinned_edge,
+                    "width": controller.width,
+                    "height": controller.height,
+                    "version": controller.version + 1,
+                })
+            elif command == "quit":
                 AppHelper.callAfter(app.terminate_, None)
                 return
 
