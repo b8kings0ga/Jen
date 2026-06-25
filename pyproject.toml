@@ -1,0 +1,22 @@
+[project]
+name = "jen-voice"
+version = "0.1.0"
+description = "Local hold-to-talk voice assistant extracted from Gjallarhorn"
+requires-python = ">=3.12"
+dependencies = [
+  "agno>=2.5.0",
+  "openai>=2.0.0",
+  "numpy>=2.0.0",
+  "sounddevice>=0.5.0",
+  "soundfile>=0.13.0",
+  "pywebview>=6.0",
+  "pyobjc>=11.0",
+  "ddgs>=9.14.4",
+  "rembg>=2.0.76",
+  "opencv-python-headless>=4.13.0.92",
+  "onnxruntime>=1.27.0",
+  "mlx>=0.31.0; platform_system == 'Darwin' and platform_machine == 'arm64'",
+]
+
+[tool.uv]
+package = false
